@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#1F5D3A">
+  <meta name="description" content="AgroAlerta: registra observaciones de tus cultivos, prepara evidencia y sigue tus casos.">
+  <title>AgroAlerta · Cuidamos lo que cultivas</title>
+  <link rel="icon" href="iconos/hoja.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/estilos.css">
+  <script id="catalogo-del-paquete" type="application/json">
+{
+  "version": "agroalerta-online-1",
+  "casos": [
+    {
+      "id": "CC-001",
+      "crop": "Tomate",
+      "zone": "Sector norte",
+      "status": "Revisión requerida",
+      "date": "2026-11-05",
+      "urgency": "Alta declarada",
+      "reason": "El productor pide revisión",
+      "complete": true
+    },
+    {
+      "id": "CC-002",
+      "crop": "Lechuga",
+      "zone": "Sector sur",
+      "status": "Completar evidencia",
+      "date": "2026-11-04",
+      "urgency": "Normal declarada",
+      "reason": "Falta fotografía de detalle",
+      "complete": false
+    },
+    {
+      "id": "CC-003",
+      "crop": "Tomate",
+      "zone": "Sector sur",
+      "status": "En seguimiento",
+      "date": "2026-11-03",
+      "urgency": "Normal declarada",
+      "reason": "Revisión de evolución pendiente",
+      "complete": true
+    }
+  ],
+  "guias": [
+    {
+      "id": "OBS-1",
+      "crop": "Hortalizas",
+      "version": "1.0",
+      "author": "Equipo AgroAlerta",
+      "status": "En revisión",
+      "source": "Guía de observación. Referencia: SENASA (2020)",
+      "url": "https://www.senasa.gob.pe/senasacontigo/miles-de-agricultores-ya-aplican-control-biologico-para-manejo-de-plagas/"
+    },
+    {
+      "id": "OBS-0",
+      "crop": "Hortalizas",
+      "version": "0.9",
+      "author": "Equipo AgroAlerta",
+      "status": "Retirada",
+      "source": "Archivo de guías",
+      "url": null
+    }
+  ]
+}
+  </script>
+  <script defer src="js/datos.js"></script>
+  <script defer src="js/script.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Saltar al contenido</a>
+  <template id="plantilla-parcelas">
+<div class="p02"><section id="inicio-parcelas" class="bienvenida">
+      <div class="bienvenida-texto">
+        <p class="etiqueta-superior">Gestión de parcelas</p>
+        <h1 tabindex="-1">Mis parcelas</h1>
+        <p>Registra tus cultivos y abre el historial de observaciones de cada parcela.</p>
+      </div>
+
+      
+      <figure class="imagen imagen-hero"><img src="imagenes/hero-agricola.jpg" alt="Hileras de hortalizas de hoja cultivadas en campo"></figure>
+    </section>
+
+    
+    <section id="registrar-parcela" class="formulario-tarjeta">
+      <h2>Registrar parcela</h2>
+      <p>Indica el nombre y el cultivo. Puedes añadir un distrito o sector.</p>
+
+      <form id="parcel-form" novalidate>
+          <div class="form-error" role="alert" tabindex="-1" hidden></div>
+        <div class="campo">
+          <label for="parcelName">Nombre de la parcela <span class="requisito">(obligatorio)</span></label>
+          <input type="text" id="parcelName" name="parcelName" maxlength="80" placeholder="Ej.: Parcela Norte" required>
+        </div>
+
+        <div class="campo">
+          <label for="crop">Cultivo <span class="requisito">(obligatorio)</span></label>
+          <input type="text" id="crop" name="crop" list="hortalizas" required maxlength="80" placeholder="Ej.: Lechuga">
+          <datalist id="hortalizas"><option>Lechuga</option><option>Tomate</option><option>Ají</option><option>Cebolla</option><option>Papa</option></datalist>
+        </div>
+
+        <div class="campo">
+          <label for="zone">Zona <span class="requisito">(opcional)</span></label>
+          <input type="text" id="zone" name="zone" maxlength="100" placeholder="Ej.: Valle del Mantaro">
+        </div>
+
+        <div class="acciones">
+          
+          <button class="button primary" type="submit">Registrar parcela</button>
+          
+        </div>
+      </form>
+    </section>
+
+    <section class="mis-parcelas" aria-labelledby="tus-parcelas"><h2 id="tus-parcelas">Parcelas registradas</h2><div class="lista-parcelas"></div></section></div>
+</template>
+  <div id="app"></div>
+  <div id="announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <dialog id="image-dialog" aria-label="Fotografía ampliada"><button class="button secondary" id="close-image">Cerrar imagen</button><img alt="Fotografía del caso ampliada" id="full-image"></dialog>
+  <noscript>Activa JavaScript para abrir tu cuaderno de campo.</noscript>
+</body>
+</html>
