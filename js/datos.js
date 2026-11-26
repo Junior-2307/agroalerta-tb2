@@ -205,12 +205,58 @@ const AgroDatos = (() => {
         r.reason = input.reason.trim();
         event(state, 'Verificación', id);
     }
-    const COOP_EXAMPLES = [];
-    const PROTOCOLS = [];
-    function setCatalog(catalog) {
-        COOP_EXAMPLES.splice(0,COOP_EXAMPLES.length,...catalog.casos);
-        PROTOCOLS.splice(0,PROTOCOLS.length,...catalog.guias);
-    }
+    const COOP_EXAMPLES = [
+        {
+            id: "CC-001",
+            crop: "Tomate",
+            zone: "Sector norte",
+            status: "Revisión requerida",
+            date: "2026-11-05",
+            urgency: "Alta declarada",
+            reason: "El productor pide revisión",
+            complete: true
+        },
+        {
+            id: "CC-002",
+            crop: "Lechuga",
+            zone: "Sector sur",
+            status: "Completar evidencia",
+            date: "2026-11-04",
+            urgency: "Normal declarada",
+            reason: "Falta fotografía de detalle",
+            complete: false
+        },
+        {
+            id: "CC-003",
+            crop: "Tomate",
+            zone: "Sector sur",
+            status: "En seguimiento",
+            date: "2026-11-03",
+            urgency: "Normal declarada",
+            reason: "Revisión de evolución pendiente",
+            complete: true
+        }
+    ];
+    const PROTOCOLS = [
+        {
+            id: "OBS-1",
+            crop: "Hortalizas",
+            version: "1.0",
+            author: "Equipo AgroAlerta",
+            status: "En revisión",
+            source: "Guía de observación. Referencia: SENASA (2020)",
+            url: "https://www.senasa.gob.pe/senasacontigo/miles-de-agricultores-ya-aplican-control-biologico-para-manejo-de-plagas/"
+        },
+        {
+            id: "OBS-0",
+            crop: "Hortalizas",
+            version: "0.9",
+            author: "Equipo AgroAlerta",
+            status: "Retirada",
+            source: "Archivo de guías",
+            url: null
+        }
+    ];
     function filterCoop(state, filters = {}) {
         if (state.session?.role !== 'cooperativa' || !state.coopLinked) {
             return [];
@@ -229,5 +275,5 @@ const AgroDatos = (() => {
 
         state.shares.push({ id: uid('DI'), protocolId: id, version: p.version, author: p.author, at: new Date().toISOString() });
     }
-    return { setCatalog, ROLES, today, uid, initialState, validPhone, validDate, event, addParcel, addCase, getCase, requestReview, addObservation, addReminder, addReport, revokePrivacy, reviewCase, orientCase, verifyReport, COOP_EXAMPLES, filterCoop, PROTOCOLS, shareProtocol };
+    return { ROLES, today, uid, initialState, validPhone, validDate, event, addParcel, addCase, getCase, requestReview, addObservation, addReminder, addReport, revokePrivacy, reviewCase, orientCase, verifyReport, COOP_EXAMPLES, filterCoop, PROTOCOLS, shareProtocol };
 })();

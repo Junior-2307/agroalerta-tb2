@@ -98,19 +98,20 @@ async function encodePhoto(file) {
     if (file.size > 12 * 1024 * 1024) {
         throw Error('La imagen supera 12 MB. Usa un archivo más pequeño.');
     }
-    const img = await createImageBitmap(file).catch(() => {
-        throw Error('El archivo no contiene una imagen válida. Cambia la fotografía.');
+    const photo = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(Error('No se pudo leer la fotografía.'));
+        reader.readAsDataURL(file);
     });
-    if (!img.width || !img.height) {
-        throw Error('No se pudo leer la imagen.');
+    const preview = new Image();
+    preview.src = photo;
+    try {
+        await preview.decode();
+        return photo;
+    } catch {
+        throw Error('El archivo no contiene una imagen válida. Cambia la fotografía.');
     }
-    const ratio = Math.min(1, 1600 / Math.max(img.width, img.height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(img.width * ratio);
-    canvas.height = Math.round(img.height * ratio);
-    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-    img.close();
-    return canvas.toDataURL('image/jpeg', 0.83);
 }
 async function hydratePhotos() {
     for (const el of document.querySelectorAll('[data-photo]')) {
@@ -904,41 +905,29 @@ function showConnectionError() {
         connectionPanel.setAttribute('aria-labelledby','connection-heading');
         connectionPanel.innerHTML='<h2 id="connection-heading">Conexión interrumpida</h2><p>Conéctate a internet para continuar.</p><button class="button primary" type="button">Reintentar</button>';
         connectionPanel.addEventListener('cancel',e=>e.preventDefault());
-        connectionPanel.querySelector('button').addEventListener('click',()=>connect(true));
+        connectionPanel.querySelector('button').addEventListener('click',()=>connect());
         document.body.append(connectionPanel);
     }
     if(!connectionPanel.open)connectionPanel.showModal();
 }
-function verifyConnection() {
-    if (!navigator.onLine) return Promise.resolve(false);
-    if (location.protocol === 'file:') {
-        const catalog = JSON.parse(document.getElementById('catalogo-del-paquete').textContent);
-        D.setCatalog(catalog);
-        reachable = true;
-        return Promise.resolve(true);
-    }
-    if (!/^https?:$/.test(location.protocol)) return Promise.resolve(false);
+async function verifyConnection() {
+    if (!navigator.onLine || !['http:', 'https:'].includes(location.protocol)) return false;
     if (ping) return ping;
-    const version=networkVersion;
-    ping=(async()=>{
-        const controller=new AbortController();
-        const deadline=setTimeout(()=>controller.abort(),4500);
-        try {
-            const url=new URL('datos/campo.json',document.baseURI);
-            url.searchParams.set('consulta',Date.now());
-            const response=await fetch(url,{cache:'no-store',signal:controller.signal});
-            if(!response.ok)throw Error();
-            const data=await response.json();
-            if(data.version!=='agroalerta-online-1'||version!==networkVersion||!navigator.onLine)throw Error();
-            D.setCatalog(data);
-            reachable=true;
-            return true;
-        } catch { return false; }
-        finally {clearTimeout(deadline);ping=null;}
-    })();
-    return ping;
+    const version = networkVersion;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4500);
+    ping = fetch('iconos/hoja.svg', { method: 'HEAD', cache: 'no-store', signal: controller.signal })
+        .then(response => response.ok && version === networkVersion && navigator.onLine)
+        .catch(() => false);
+    try {
+        reachable = await ping;
+        return reachable;
+    } finally {
+        clearTimeout(timeout);
+        ping = null;
+    }
 }
-async function connect(refresh=false) {
+async function connect() {
     if(!await verifyConnection()){showConnectionError();return false;}
     const recover=connectionPanel?.open;
     if(recover)connectionPanel.close();
@@ -949,15 +938,8 @@ function requireConnection() {
     if(!reachable || !navigator.onLine)throw Error('Conéctate a internet para continuar.');
 }
 window.addEventListener('offline',()=>{networkVersion++;showConnectionError();});
-window.addEventListener('online',()=>connect(true));
-window.addEventListener('pageshow',()=>{connect(true);});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)connect(true);});
+window.addEventListener('online',()=>connect());
+window.addEventListener('pageshow',()=>{connect();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)connect();});
 setInterval(()=>{if(!document.hidden)connect();},30000);
-if (location.protocol !== 'file:' && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistration('./').then(registration => {
-        if (registration?.active?.scriptURL === new URL('./sw.js', document.baseURI).href) {
-            registration.update().catch(() => {});
-        }
-    }).catch(() => {});
-}
-connect(true);
+connect();
