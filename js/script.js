@@ -258,12 +258,20 @@ function shell(content, route) {
     const [titulo, rutas] = grupos[role];
     const opciones = role === 'productor' ? [...visible, ['capture', 'camera', 'Nuevo caso']] : visible;
     const enlaces = items => items.map(([r,i,t]) => `<a href="#${r}" ${route === r ? 'aria-current="page"' : ''}>${icon(i)}${t}</a>`).join('');
-    return `<div class="workspace"><header class="workspace-header"><span class="workspace-label">Cuaderno de campo</span><span class="connection" id="connection">${navigator.onLine ? '● Con conexión' : '○ Sin conexión'}</span><a href="#privacy" class="help-link">Ayuda ${icon('shield')}</a></header><div class="mobile-brand" style="display:flex">${logo()}<a href="#access">${D.ROLES[role]} · Cambiar</a></div>
-<nav style="flex-wrap:wrap" class="menu-horizontal" aria-label="Navegación principal">
-    ${enlaces(visible.filter(([r]) => r !== 'privacy' && !rutas.includes(r)))}
-    <details class="menu-modulos"><summary>${titulo}</summary><div class="menu-vertical">
-        ${enlaces(opciones.filter(([r]) => rutas.includes(r)))}    </div></details>
-</nav><main id="main" class="page-content">${content}</main><footer class="app-footer">AgroAlerta · Cuaderno de campo <span></span></footer></div>`;
+    return `<div class="marco-cuaderno">
+<header class="barra-cuaderno">
+    ${logo()}
+    <nav class="acciones-cuaderno" aria-label="Tareas del perfil">
+        <details class="menu-modulos"><summary>${titulo}</summary><div class="menu-vertical">
+            ${enlaces(opciones.filter(([r]) => rutas.includes(r)))}
+        </div></details>
+        <a href="#access" aria-label="Cambiar perfil, actual: ${D.ROLES[role]}">${D.ROLES[role]} · Cambiar</a>
+    </nav>
+</header>
+<aside class="lateral-cuaderno"><details open><summary>Cuaderno de campo</summary>
+    <nav aria-label="Secciones del cuaderno">${enlaces(visible.filter(([r]) => !rutas.includes(r)))}</nav>
+</details></aside>
+<div class="workspace"><main id="main" class="page-content">${content}</main><footer class="app-footer">AgroAlerta · Cuaderno de campo <span></span></footer></div></div>`;
 }
 function caseCard(c) {
     const p = parcelFor(c);
