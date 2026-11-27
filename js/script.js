@@ -250,16 +250,20 @@ const navigation = [['home', 'home', 'Mi espacio'], ['parcels', 'plot', 'Mis par
 function shell(content, route) {
     const role = state.session?.role;
     const visible = navigation.filter(([r]) => !(role !== 'productor' && ['parcels', 'advice', 'queue'].includes(r)) && !(role !== 'cooperativa' && ['coop', 'coordination'].includes(r)) && !(role !== 'especialista' && ['inspections', 'review', 'reports'].includes(r)));
-    return `<div class="app-shell">
-    <aside class="sidebar">${logo()}<p class="sidebar-label">ESPACIO DE TRABAJO</p><nav aria-label="Módulos">${visible.map(([r, i, t]) => `<a href="#${r}" class="nav-link ${route === r ? 'active' : ''}" ${route === r ? 'aria-current="page"' : ''}>${icon(i)}<span>${t}</span></a>`).join('')}</nav><div class="sidebar-profile"><span class="avatar">${role === 'productor' ? 'P' : role === 'cooperativa' ? 'C' : 'E'}</span><div><strong>${esc(state.session?.name||D.ROLES[role]||'Visitante')}</strong><a href="#access">Cambiar perfil</a></div></div>
-    </aside>
-<div class="workspace"><header class="workspace-header"><span class="workspace-label">Cuaderno de campo</span><span class="connection" id="connection">${navigator.onLine ? '● Con conexión' : '○ Sin conexión'}</span><a href="#privacy" class="help-link">Ayuda ${icon('shield')}</a></header><div class="mobile-brand">${logo()}<a href="#access">${D.ROLES[role]} · Cambiar</a></div>
-<nav class="menu-horizontal" aria-label="Navegación principal">
-    ${visible.slice(0, role === 'productor' ? 2 : 1).map(([r, i, t]) => `<a href="#${r}" ${route === r ? 'aria-current="page"' : ''}>${icon(i)}${t}</a>`).join('')}
-    <details class="menu-modulos"><summary>Módulos</summary><div class="menu-vertical">
-        ${visible.map(([r, i, t]) => `<a href="#${r}" ${route === r ? 'aria-current="page"' : ''}>${icon(i)}${t}</a>`).join('')}
-    </div></details>
-</nav><main id="main" class="page-content">${content}</main><footer class="app-footer">AgroAlerta · Cuaderno de campo <span></span></footer></div></div>`;
+    const grupos = {
+        productor: ['Mis casos', ['capture', 'advice', 'queue']],
+        cooperativa: ['Cooperativa', ['coop', 'coordination']],
+        especialista: ['Revisión profesional', ['review', 'inspections', 'reports']]
+    };
+    const [titulo, rutas] = grupos[role];
+    const opciones = role === 'productor' ? [...visible, ['capture', 'camera', 'Nuevo caso']] : visible;
+    const enlaces = items => items.map(([r,i,t]) => `<a href="#${r}" ${route === r ? 'aria-current="page"' : ''}>${icon(i)}${t}</a>`).join('');
+    return `<div class="workspace"><header class="workspace-header"><span class="workspace-label">Cuaderno de campo</span><span class="connection" id="connection">${navigator.onLine ? '● Con conexión' : '○ Sin conexión'}</span><a href="#privacy" class="help-link">Ayuda ${icon('shield')}</a></header><div class="mobile-brand" style="display:flex">${logo()}<a href="#access">${D.ROLES[role]} · Cambiar</a></div>
+<nav style="flex-wrap:wrap" class="menu-horizontal" aria-label="Navegación principal">
+    ${enlaces(visible.filter(([r]) => r !== 'privacy' && !rutas.includes(r)))}
+    <details class="menu-modulos"><summary>${titulo}</summary><div class="menu-vertical">
+        ${enlaces(opciones.filter(([r]) => rutas.includes(r)))}    </div></details>
+</nav><main id="main" class="page-content">${content}</main><footer class="app-footer">AgroAlerta · Cuaderno de campo <span></span></footer></div>`;
 }
 function caseCard(c) {
     const p = parcelFor(c);
@@ -365,24 +369,33 @@ function result() {
 <div class="next-step"><div>${icon('chat')}<h3>Prepara una segunda mirada.</h3><p>Revisa qué evidencia compartirás y qué necesitas preguntar.</p></div>${link('consult/' + c.id, 'Solicitar revisión')}${link('capture/' + p.id, 'Registrar nueva evidencia', 'text-link')}</div>
     </section></div>`;
 }
-function caseDetail() {
+function ayudaDelCaso(c, p, solicitud) {
+    if (c.orientation) return '<p>La orientación del especialista está disponible en este caso.</p>';
+    if (!solicitud?.consent.image) return link('consult/' + c.id, 'Preparar consulta al especialista');
+    const texto = [solicitud.question, 'Caso ' + c.id, p.crop + ' · ' + c.organ + ' · ' + date(c.date), c.symptoms];
+    if (solicitud.consent.zone) texto.push('Zona: ' + p.zone);
+    const correo = 'mailto:?subject=' + encodeURIComponent('Consulta de cultivo ' + c.id) + '&body=' + encodeURIComponent(texto.join('\n'));
+    const foto = photos.get(c.photoId);
+    return `<p>Elige el correo de tu especialista y adjunta la fotografía del caso. Su respuesta llegará a tu correo.</p>
+    <div class="actions">${foto ? `<a class="button secondary" download="${esc(c.id)}" href="${esc(foto)}">Descargar fotografía</a>` : ''}<a class="button primary" href="${esc(correo)}">Abrir consulta en mi correo</a></div>`;
+}function caseDetail() {
     const c = safeCase(), p = parcelFor(c), r = state.requests.find(r => r.caseId === c.id && !r.revoked);
     return `${heading(esc(c.id) + ' · ' + esc(p.crop), esc(p.name), 'Consulta las observaciones de la parcela en orden de fecha.', link('result/' + c.id, 'Ver resultado', 'button secondary'))}
 <div class="two-column">
     <section class="stack">
-    <article class="panel timeline"><header class="cabecera-seguimiento"><h2>Seguimiento del caso</h2>${badge(c.status)}</header>${comparison(c)}<div class="timeline-item"><span class="timeline-dot"></span><div><p class="eyebrow">${date(c.date)} · OBSERVACIÓN INICIAL</p><h3>${esc(c.organ)}</h3><p>${esc(c.symptoms)}</p>${photoTag(c.photoId, 'Fotografía original', 'timeline-photo')}</div></div>${c.observations.slice().sort((a, b) => a.date.localeCompare(b.date)).map(o => `<div class="timeline-item"><span class="timeline-dot"></span><div><p class="eyebrow">${date(o.date)} · EVOLUCIÓN</p><p>${esc(o.note)}</p>${o.photoId ? photoTag(o.photoId, 'Nueva evidencia de evolución', 'timeline-photo') : ''}</div></div>`).join('')}<p class="help">Comparar fotografías no demuestra causalidad ni eficacia.</p>
+    <section class="panel"><h2>Consulta al especialista</h2>${ayudaDelCaso(c,p,r)}</section><article class="panel timeline"><header class="cabecera-seguimiento"><h2>Seguimiento del caso</h2>${badge(c.status)}</header>${comparison(c)}<div class="timeline-item"><span class="timeline-dot"></span><div><p class="eyebrow">${date(c.date)} · OBSERVACIÓN INICIAL</p><h3>${esc(c.organ)}</h3><p>${esc(c.symptoms)}</p>${photoTag(c.photoId, 'Fotografía original', 'timeline-photo')}</div></div>${c.observations.slice().sort((a, b) => a.date.localeCompare(b.date)).map(o => `<div class="timeline-item"><span class="timeline-dot"></span><div><p class="eyebrow">${date(o.date)} · EVOLUCIÓN</p><p>${esc(o.note)}</p>${o.photoId ? photoTag(o.photoId, 'Nueva evidencia de evolución', 'timeline-photo') : ''}</div></div>`).join('')}<p class="help">Comparar fotografías no demuestra causalidad ni eficacia.</p>
     </article>
-<section class="panel"><h2>Respuesta de revisión</h2>${c.orientation ? `${badge('Orientación', 'amber')}<p><strong>${esc(c.orientation.author)}</strong> · ${date(c.orientation.at)}</p><p>${esc(c.orientation.text)}</p><p><strong>Referencia declarada:</strong> ${esc(c.orientation.reference)}</p><p><strong>Condiciones:</strong> ${esc(c.orientation.conditions)}</p><p><strong>Límites:</strong> ${esc(c.orientation.limits)}</p>` : `<p class="empty-line"><strong>Sin respuesta.</strong> La orientación aparecerá aquí cuando se registre.</p>`}${c.review ? `<p>Revisión: <strong>${esc(c.review.outcome)}</strong> · ${esc(c.review.reason)}</p>` : ''}${r ? `<p>Consulta ${esc(r.id)} · ${esc(r.status)}</p><div class="thread">${r.messages.map(m => `<p><strong>Productor · ${date(m.at)}:</strong> ${esc(m.text)}</p>`).join('')}</div>
-    <form id="clarify-form" novalidate>${errorBox()}${textarea('clarification', 'Pedir aclaración en este hilo', '', 'Añade tu pregunta al hilo de esta consulta.')}<button class="button secondary" type="submit">Guardar aclaración</button>
+<section class="panel"><h2>Respuesta de revisión</h2>${c.orientation ? `${badge('Orientación', 'amber')}<p><strong>${esc(c.orientation.author)}</strong> · ${date(c.orientation.at)}</p><p>${esc(c.orientation.text)}</p><p><strong>Referencia declarada:</strong> ${esc(c.orientation.reference)}</p><p><strong>Condiciones:</strong> ${esc(c.orientation.conditions)}</p><p><strong>Límites:</strong> ${esc(c.orientation.limits)}</p>` : `<p class="empty-line"><strong>Sin respuesta.</strong> La consulta sigue pendiente de orientación en el cuaderno.</p>`}${c.review ? `<p>Revisión: <strong>${esc(c.review.outcome)}</strong> · ${esc(c.review.reason)}</p>` : ''}${r ? `<p>Consulta ${esc(r.id)} · ${esc(r.status)}</p><div class="thread">${r.messages.map(m => `<p><strong>Productor · ${date(m.at)}:</strong> ${esc(m.text)}</p>`).join('')}</div>
+    <form id="clarify-form" ${c.review || c.orientation ? '' : 'hidden'} novalidate>${errorBox()}${textarea('clarification', 'Pedir aclaración en este hilo', '', 'Añade tu pregunta al hilo de esta consulta.')}<button class="button secondary" type="submit">Guardar aclaración</button>
     </form>` : link('consult/' + c.id, 'Preparar consulta', 'button secondary')}</section>
     </section>
 <aside class="stack">
     <section class="panel"><h2>Añadir evolución</h2>
     <form id="evolution-form" novalidate>${errorBox()}${field('followDate', 'Fecha', 'date', D.today(), '', `min="${c.date}" max="${D.today()}"`)}${textarea('followNote', 'Nueva observación', '', 'Describe cambios sin asumir que un tratamiento los causó.')}<div class="field"><label for="followPhoto">Fotografía adicional (opcional)</label><input id="followPhoto" type="file" name="followPhoto" accept="image/jpeg,image/png,image/webp"></div><button class="button primary wide" type="submit">Guardar evolución</button>
     </form></section>
-<section class="panel"><h2>Programar revisión</h2>
+<section class="panel"><h2>Recordarme observar el cultivo</h2>
     <form id="reminder-form" novalidate>${errorBox()}${field('reminderDate', 'Día de revisión', 'date', D.today(), '', `min="${D.today()}"`)}${select('channel', 'Canal', [['agenda', 'Agenda de revisión'], ['notification', 'Solicitar notificación del navegador']], 'agenda')}<p class="help">La fecha se mostrará en tu agenda de revisión.</p><button class="button secondary wide" type="submit">Guardar recordatorio</button>
-    </form>${state.reminders.filter(r => r.caseId === c.id).map(r => `<p class="saved-label">${icon('calendar')} ${date(r.date)} · Agenda de revisión</p>`).join('')}</section><section class="panel"><h2>Estado del caso</h2><form id="close-case-form" novalidate>${errorBox()}
+    </form>${state.reminders.filter(r => r.caseId === c.id).map(r => `<p class="saved-label">${icon('calendar')} ${date(r.date)} · Agenda de revisión</p>`).join('')}</section><section class="panel"><h2>Seguimiento del productor</h2><p>Registra si la señal persiste, desapareció o requiere una visita.</p><form id="close-case-form" novalidate>${errorBox()}
     ${select('caseStatus','Nuevo estado',['Resuelto','Continúa en seguimiento','Requiere visita'],c.status)}
     ${textarea('closeReason','Motivo del cambio')}<button class="button secondary" type="submit">Actualizar estado</button></form>
     ${(c.decisions||[]).map(entry=>`<p><strong>${esc(entry.status)}</strong> · ${date(entry.date)}<br>${esc(entry.reason)}</p>`).join('')}</section>
