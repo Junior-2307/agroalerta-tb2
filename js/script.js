@@ -184,8 +184,8 @@ function comparison(c) {
         return '<p class="help comparison-hint">Añade una segunda fotografía para compararla con la inicial.</p>';
     }
     return `<section class="comparison"><h3>Comparación fotográfica</h3><div class="photo-pair">
-    <figure>${photoTag(c.photoId, 'Fotografía inicial de la comparación', 'pair-photo')}<figcaption>Inicial · ${date(c.date)}</figcaption></figure>
-    <figure>${photoTag(last.photoId, 'Fotografía más reciente de la comparación', 'pair-photo')}<figcaption>Seguimiento · ${date(last.date)}</figcaption></figure>
+    <figure><button type="button" class="ampliar-comparacion" data-action="zoom-case" aria-label="Ampliar fotografía inicial">${photoTag(c.photoId, 'Fotografía inicial de la comparación', 'pair-photo')}</button><figcaption>Inicial · ${date(c.date)}</figcaption></figure>
+    <figure><button type="button" class="ampliar-comparacion" data-action="zoom-follow" aria-label="Ampliar fotografía de seguimiento">${photoTag(last.photoId, 'Fotografía más reciente de la comparación', 'pair-photo')}</button><figcaption>Seguimiento · ${date(last.date)}</figcaption></figure>
     </div><p class="help">Las diferencias de luz, distancia y ángulo pueden cambiar lo que se aprecia.</p>
     </section>`;
 }
@@ -341,13 +341,17 @@ ${draft.photoId ? `<div class="actions">${button('zoom-draft', 'Ampliar imagen',
 ${stagedPhoto?'':button('photo-next', `Añadir contexto ${icon('arrow')}`, 'button primary wide')}</div>
 <div ${captureStep === 2 ? '' : 'hidden'} id="context-step"><p class="eyebrow">PASO 2 DE 3</p><h2>Cuéntanos lo que ves.</h2>${select('parcelId', 'Parcela', state.parcels.map(p => [p.id, p.name + ' · ' + p.crop]), draft.parcelId)}<div class="form-grid">${select('organ', 'Órgano observado', ['Hoja', 'Tallo', 'Fruto', 'Raíz', 'Planta completa'], draft.organ)}${field('observationDate', 'Fecha de observación', 'date', draft.date, 'No inferimos la fecha de la fotografía.', `max="${D.today()}"`)}</div>${textarea('symptoms', 'Descripción de la señal', draft.symptoms, 'Describe color, forma, distribución y desde cuándo la observas. Evita asumir una causa.')}${select('urgency', '¿Con qué prioridad pides revisión?', [['normal', 'Normal declarada'], ['alta', 'Alta declarada por mí']], draft.urgency, 'Selecciona la prioridad de tu consulta.')}<div class="actions">${button('photo-back', '← Revisar fotografía', 'button secondary')}<button class="button primary" type="submit">Guardar y ver resultado ${icon('arrow')}</button></div></div>
     </form></section>
-    <aside class="capture-guide"><div class="guide-icon">${icon('eye')}</div><p class="eyebrow">MEJOR EVIDENCIA</p><h2>Revisa tu fotografía</h2><ul class="checklist"><li>Luz natural, sin reflejos.</li><li>La señal aparece enfocada.</li><li>Se distingue el órgano observado.</li><li>No aparecen personas ni datos privados.</li></ul><div class="guide-divider"></div>
+    <aside class="capture-guide"><h2>Revisa tu fotografía</h2>
+    <div class="guia-encuadres">
+      <figure><img src="imagenes/surcos-lechuga.jpg" alt="Varias hileras de lechuga vistas en conjunto"><figcaption>Vista del cultivo</figcaption></figure>
+      <figure><img src="imagenes/detalle-lechuga.jpg" alt="Vista cercana de las hojas de una lechuga"><figcaption>Detalle de la hoja</figcaption></figure>
+    </div><ul class="checklist"><li>Luz natural, sin reflejos.</li><li>La señal aparece enfocada.</li><li>Se distingue el órgano observado.</li><li>No aparecen personas ni datos privados.</li></ul>
     </aside></div>`;
 }
 function result() {
     const c = safeCase(), p = parcelFor(c);
     return `${heading('PASO 3 DE 3 · ' + esc(c.id), 'Resultado preliminar', esc(p.name) + ' · ' + esc(p.crop), link('case/' + c.id, 'Ver seguimiento', 'button secondary'))}
-<div class="result-layout"><div class="result-status">${badge('Evaluación inicial', 'amber')}<h2>${c.result === 'inconcluso' ? 'Se necesita otra fotografía' : 'Observación lista para revisión'}</h2><p class="result-lead">${c.result === 'inconcluso' ? 'El detalle marcado como dudoso dificulta la revisión.' : 'La fotografía y los síntomas están listos para la consulta.'}</p><div class="certainty"><span>Causa de la señal</span><strong>Pendiente de identificar</strong></div></div>
+<div class="result-layout"><div class="result-status ${c.result === 'inconcluso' ? 'pendiente' : 'registrado'}"><div class="estado-resultado">${icon(c.result === 'inconcluso' ? 'camera' : 'check')}<span>Evaluación inicial</span></div><h2>${c.result === 'inconcluso' ? 'Se necesita otra fotografía' : 'Observación lista para revisión'}</h2><p class="result-lead">${c.result === 'inconcluso' ? 'El detalle marcado como dudoso dificulta la revisión.' : 'La fotografía y los síntomas están listos para la consulta.'}</p><div class="certainty"><span>Causa de la señal</span><strong>Pendiente de identificar</strong></div></div>
 <section class="panel evidence-panel">${photoTag(c.photoId, 'Evidencia guardada por el productor', 'result-photo')}${button('zoom-case', 'Ampliar fotografía', 'button secondary wide')}<dl class="context-list"><div><dt>Órgano</dt><dd>${esc(c.organ)}</dd></div><div><dt>Fecha</dt><dd>${date(c.date)}</dd></div><div><dt>Calidad declarada</dt><dd>${c.quality === 'clara' ? 'Detalle visible según el usuario' : 'Insuficiente o dudosa'}</dd></div></dl><h3>Lo que registraste</h3><p>${esc(c.symptoms)}</p>
     </section>
 <section class="result-content">
@@ -360,7 +364,7 @@ function caseDetail() {
     return `${heading(esc(c.id) + ' · ' + esc(p.crop), esc(p.name), 'Consulta las observaciones de la parcela en orden de fecha.', link('result/' + c.id, 'Ver resultado', 'button secondary'))}
 <div class="two-column">
     <section class="stack">
-    <article class="panel timeline"><h2>Seguimiento del caso</h2>${badge(c.status)}${comparison(c)}<div class="timeline-item"><span class="timeline-dot"></span><div><p class="eyebrow">${date(c.date)} · OBSERVACIÓN INICIAL</p><h3>${esc(c.organ)}</h3><p>${esc(c.symptoms)}</p>${photoTag(c.photoId, 'Fotografía original', 'timeline-photo')}</div></div>${c.observations.slice().sort((a, b) => a.date.localeCompare(b.date)).map(o => `<div class="timeline-item"><span class="timeline-dot"></span><div><p class="eyebrow">${date(o.date)} · EVOLUCIÓN</p><p>${esc(o.note)}</p>${o.photoId ? photoTag(o.photoId, 'Nueva evidencia de evolución', 'timeline-photo') : ''}</div></div>`).join('')}<p class="help">Comparar fotografías no demuestra causalidad ni eficacia.</p>
+    <article class="panel timeline"><header class="cabecera-seguimiento"><h2>Seguimiento del caso</h2>${badge(c.status)}</header>${comparison(c)}<div class="timeline-item"><span class="timeline-dot"></span><div><p class="eyebrow">${date(c.date)} · OBSERVACIÓN INICIAL</p><h3>${esc(c.organ)}</h3><p>${esc(c.symptoms)}</p>${photoTag(c.photoId, 'Fotografía original', 'timeline-photo')}</div></div>${c.observations.slice().sort((a, b) => a.date.localeCompare(b.date)).map(o => `<div class="timeline-item"><span class="timeline-dot"></span><div><p class="eyebrow">${date(o.date)} · EVOLUCIÓN</p><p>${esc(o.note)}</p>${o.photoId ? photoTag(o.photoId, 'Nueva evidencia de evolución', 'timeline-photo') : ''}</div></div>`).join('')}<p class="help">Comparar fotografías no demuestra causalidad ni eficacia.</p>
     </article>
 <section class="panel"><h2>Respuesta de revisión</h2>${c.orientation ? `${badge('Orientación', 'amber')}<p><strong>${esc(c.orientation.author)}</strong> · ${date(c.orientation.at)}</p><p>${esc(c.orientation.text)}</p><p><strong>Referencia declarada:</strong> ${esc(c.orientation.reference)}</p><p><strong>Condiciones:</strong> ${esc(c.orientation.conditions)}</p><p><strong>Límites:</strong> ${esc(c.orientation.limits)}</p>` : `<p class="empty-line"><strong>Sin respuesta.</strong> La orientación aparecerá aquí cuando se registre.</p>`}${c.review ? `<p>Revisión: <strong>${esc(c.review.outcome)}</strong> · ${esc(c.review.reason)}</p>` : ''}${r ? `<p>Consulta ${esc(r.id)} · ${esc(r.status)}</p><div class="thread">${r.messages.map(m => `<p><strong>Productor · ${date(m.at)}:</strong> ${esc(m.text)}</p>`).join('')}</div>
     <form id="clarify-form" novalidate>${errorBox()}${textarea('clarification', 'Pedir aclaración en este hilo', '', 'Añade tu pregunta al hilo de esta consulta.')}<button class="button secondary" type="submit">Guardar aclaración</button>
@@ -441,12 +445,14 @@ function reviewList() {
 }
 function reviewCase() {
     const c = safeCase();
-    return `${heading('ESPECIALISTA', 'Revisión profesional', 'Caso ' + esc(c.id) + '. La revisión se añade al historial y conserva la observación original.')}<div class="two-column">
-    <section class="panel">${photoTag(c.photoId, 'Fotografía compartida para revisión', 'result-photo')}<h2>Evidencia y contexto declarados</h2>${badge(c.status)}<dl class="context-list"><div><dt>Cultivo</dt><dd>${esc(parcelFor(c).crop)}</dd></div><div><dt>Zona</dt><dd>${esc(authorizedZone(c))}</dd></div></dl><p>${esc(c.organ)} · ${date(c.date)} · ${esc(c.symptoms)}</p><h3>Identificación de la causa</h3><p>La causa está pendiente de identificar.</p>
+    return `${heading('ESPECIALISTA', 'Revisión profesional', 'Caso ' + esc(c.id) + '. La revisión se añade al historial y conserva la observación original.')}<div class="two-column revision-caso">
+    <section class="panel ficha-original"><header class="cabecera-ficha"><h2>Evidencia y contexto declarados</h2>${badge(c.status)}</header>
+    ${photoTag(c.photoId, 'Fotografía compartida para revisión', 'result-photo')}${button('zoom-case', 'Ampliar fotografía', 'button secondary wide')}<dl class="context-list"><div><dt>Cultivo</dt><dd>${esc(parcelFor(c).crop)}</dd></div><div><dt>Zona</dt><dd>${esc(authorizedZone(c))}</dd></div></dl><p>${esc(c.organ)} · ${date(c.date)} · ${esc(c.symptoms)}</p><h3>Identificación de la causa</h3><p>La causa está pendiente de identificar.</p></section>
+    <div class="stack"><section class="panel decision-profesional"><h2>Decisión del especialista</h2>
     <form id="review-form" novalidate>${errorBox()}${select('reviewOutcome', 'Decisión de revisión', ['Aceptar registro', 'Solicitar corrección', 'Inconcluso'], c.review?.outcome || '')}${textarea('reviewReason', 'Motivo y evidencia adicional necesaria', c.review?.reason || '')}<button class="button primary" type="submit">Guardar revisión</button>
     </form></section>
     <section class="panel"><h2>Orientación sin prescripción</h2>${reviewHistory(c)}<form id="orientation-form" novalidate>${errorBox()}${textarea('orientation', 'Orientación', c.orientation?.text || '', 'Describe la próxima observación o revisión.')}${field('reference', 'Referencia de la orientación', 'text', c.orientation?.reference || '', 'Indica la publicación o guía consultada.', 'maxlength="500"')}${textarea('conditions', 'Condiciones de uso', c.orientation?.conditions || '')}${textarea('limits', 'Límites y necesidad de consulta', c.orientation?.limits || '')}<button class="button secondary" type="submit">Guardar orientación</button>
-    </form></section></div>`;
+    </form></section></div></div>`;
 }
 function inspections() {
     const available = state.requests.filter(r => r.consent.image && !r.revoked);
@@ -656,8 +662,15 @@ document.addEventListener('click', async (e) => {
             captureStep = 1;
             render();
         }
-        if (action === 'zoom-draft' || action === 'zoom-case') {
-            const id = action === 'zoom-draft' ? state.draft.photoId : safeCase().photoId;
+        if (['zoom-draft', 'zoom-case', 'zoom-follow'].includes(action)) {
+            let id;
+            if (action === 'zoom-draft') {
+                id = state.draft.photoId;
+            } else {
+                const record = safeCase();
+                const selected = el.querySelector('[data-photo]')?.dataset.photo;
+                id = action === 'zoom-case' ? record.photoId : record.observations.find(o => o.photoId === selected)?.photoId;
+            }
             const src = await photoRead(id);
             if (!src) {
                 throw Error('No se encontró la fotografía guardada.');
