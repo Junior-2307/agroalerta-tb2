@@ -3764,3 +3764,23 @@ input[type=file] {
   .p02 .bienvenida-texto { padding: 28px 22px 44px; }
   .guia-encuadres img { aspect-ratio: 4/3; }
 }
+
+.marco-cuaderno { display:grid; grid-template-columns: minmax(190px, 235px) minmax(0,1fr); min-height:100vh; grid-template-rows:auto 1fr; }
+.barra-cuaderno { grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:12px clamp(14px,3vw,40px); background:white; border-bottom:1px solid var(--line); position:relative; z-index:5; }
+.acciones-cuaderno { display:flex; align-items:center; gap:clamp(10px,2vw,28px); flex-wrap:wrap; }
+.acciones-cuaderno > a { font-size:.9rem; color:var(--green-dark); }
+.acciones-cuaderno summary { background:#e8f0e5; }
+.acciones-cuaderno .menu-vertical a, .lateral-cuaderno nav a { display:flex; gap:10px; align-items:center; padding:12px; color:#244936; text-decoration:none; border-radius:8px; }
+.lateral-cuaderno { padding:20px 12px; background:white; border-right:1px solid var(--line); }
+.lateral-cuaderno details { margin:0; padding:0; background:transparent; border:0; }
+.lateral-cuaderno summary { cursor:pointer; padding:10px; font-weight:bold; }
+.lateral-cuaderno nav { display:grid; gap:3px; margin-top:8px; }
+.lateral-cuaderno nav a[aria-current], .lateral-cuaderno nav a:hover, .acciones-cuaderno .menu-vertical a:hover { background:#e5efe2; }
+@media(max-width:700px) {
+  .marco-cuaderno { display:block; }
+  .barra-cuaderno { flex-wrap:wrap; gap:10px; }
+  .acciones-cuaderno { width:100%; justify-content:space-between; }
+  .acciones-cuaderno .menu-modulos { margin:0; }
+  .acciones-cuaderno .menu-vertical { left:0; right:auto; }
+  .lateral-cuaderno { padding:3px 14px; border-right:0; border-bottom:1px solid var(--line); }
+}
