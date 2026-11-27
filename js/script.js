@@ -253,7 +253,13 @@ function shell(content, route) {
     return `<div class="app-shell">
     <aside class="sidebar">${logo()}<p class="sidebar-label">ESPACIO DE TRABAJO</p><nav aria-label="Módulos">${visible.map(([r, i, t]) => `<a href="#${r}" class="nav-link ${route === r ? 'active' : ''}" ${route === r ? 'aria-current="page"' : ''}>${icon(i)}<span>${t}</span></a>`).join('')}</nav><div class="sidebar-profile"><span class="avatar">${role === 'productor' ? 'P' : role === 'cooperativa' ? 'C' : 'E'}</span><div><strong>${esc(state.session?.name||D.ROLES[role]||'Visitante')}</strong><a href="#access">Cambiar perfil</a></div></div>
     </aside>
-<div class="workspace"><header class="workspace-header"><span class="workspace-label">Cuaderno de campo</span><span class="connection" id="connection">${navigator.onLine ? '● Con conexión' : '○ Sin conexión'}</span><a href="#privacy" class="help-link">Ayuda ${icon('shield')}</a></header><div class="mobile-brand">${logo()}<a href="#access">${D.ROLES[role]} · Cambiar</a></div><nav class="mobile-nav" aria-label="Módulos móvil">${visible.map(([r, i, t]) => `<a class="${route === r ? 'active' : ''}" href="#${r}" ${route === r ? 'aria-current="page"' : ''}>${icon(i)}${t}</a>`).join('')}</nav><main id="main" class="page-content">${content}</main><footer class="app-footer">AgroAlerta · Cuaderno de campo <span></span></footer></div></div>`;
+<div class="workspace"><header class="workspace-header"><span class="workspace-label">Cuaderno de campo</span><span class="connection" id="connection">${navigator.onLine ? '● Con conexión' : '○ Sin conexión'}</span><a href="#privacy" class="help-link">Ayuda ${icon('shield')}</a></header><div class="mobile-brand">${logo()}<a href="#access">${D.ROLES[role]} · Cambiar</a></div>
+<nav class="menu-horizontal" aria-label="Navegación principal">
+    ${visible.slice(0, role === 'productor' ? 2 : 1).map(([r, i, t]) => `<a href="#${r}" ${route === r ? 'aria-current="page"' : ''}>${icon(i)}${t}</a>`).join('')}
+    <details class="menu-modulos"><summary>Módulos</summary><div class="menu-vertical">
+        ${visible.map(([r, i, t]) => `<a href="#${r}" ${route === r ? 'aria-current="page"' : ''}>${icon(i)}${t}</a>`).join('')}
+    </div></details>
+</nav><main id="main" class="page-content">${content}</main><footer class="app-footer">AgroAlerta · Cuaderno de campo <span></span></footer></div></div>`;
 }
 function caseCard(c) {
     const p = parcelFor(c);
@@ -615,6 +621,8 @@ document.addEventListener('change', e => {
     }
 });
 document.addEventListener('click', async (e) => {
+    const menu = $('.menu-modulos[open]');
+    if (menu && (!menu.contains(e.target) || e.target.closest('.menu-vertical a'))) menu.open = false;
     const el = e.target.closest('[data-action]');
     if (!el) {
         return;
