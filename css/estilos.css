@@ -3611,6 +3611,45 @@ input[type=file] {
 
 .toast { pointer-events: none; }
 
+.menu-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: white;
+  border-bottom: 1px solid var(--line);
+}
+.menu-horizontal a, .menu-modulos summary {
+  padding: 10px;
+  border-radius: 8px;
+  color: var(--green-dark);
+  font-weight: bold;
+  cursor: pointer;
+}
+.menu-horizontal a { display: flex; align-items: center; gap: 6px; text-decoration: none; }
+.menu-horizontal a:hover, .menu-horizontal a[aria-current="page"], .menu-modulos[open] summary {
+  background: #e6efe4;
+}
+.menu-modulos { position: relative; margin: 0 0 0 auto; padding: 0; }
+.menu-vertical {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  top: calc(100% + 7px);
+  width: min(245px, 88vw);
+  max-height: 52vh;
+  overflow: auto;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 8px 22px #17352a22;
+}
+@media (max-width: 420px) {
+  .menu-horizontal { font-size: .82rem; padding-inline: 6px; }
+  .menu-horizontal > a .icon { display: none; }
+}
+
 .p02 .bienvenida {
   display: grid;
   grid-template-columns: 1fr;
